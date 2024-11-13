@@ -3,7 +3,7 @@
 {% block head %}
 {{ super() }}
 
-<meta property="og:title" content="Y{{ page.title }}">
+<meta property="og:title" content="{{ page.title }} | Heresy">
 <meta property="og:description" content="{{ page.content | striptags | truncate(length=175) }}">
 <meta property="og:image" content="{{ page.extra.image }}">
 <meta property="og:url" content="{{ current_url }}">
