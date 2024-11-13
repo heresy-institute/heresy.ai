@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block head %}
+{{ super() }}
+{% endblock head %}
+
+{% block content %}
+
+{% for page in section.pages %}
+<div class="content-item {% if loop.index == 1 %}top{% endif %}">
+  <!-- <div class="content-preview" -->
+  <!-- style="background-image: url('{{ page.extra.image }}'); background-position: {{ page.extra.image_align | default(value='center')}};"> -->
+  <div class="content-preview" style="background-image: url('{{ page.extra.image }}');">
+    <div class="content-image">
+    </div>
+    <div class="content-type">{{ page.extra.type }}</div>
+    <a href={{ page.permalink }}>
+      <h1 class="content-title">{{ page.title }}</h1>
+    </a>
+  </div>
+  <div class="content-lower">
+    <div class="content-description">
+      <p>
+        {{ page.content | striptags | truncate(length=175) }}
+      </p>
+    </div>
+    <div class="content-information">
+      <p><code>{{ page.extra.author }}</code></p>
+      <p>{{ page.date }}</p>
+    </div>
+    <br />
+    <div class="content-tags">
+      {% for tag in page.taxonomies.tags %}
+      <p class="tag">{{ tag }}</p>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endfor %}
+
+<!-- {% for c in [1, 1, 1, 1, 1, 1, 1]%} -->
+
+<!-- <div class="content-item"> -->
+<!-- <div class="content-preview"> -->
+<!-- <div class="content-image"></div> -->
+<!-- <div class="content-type">Post</div> -->
+<!-- <h1 class="content-title">Artificial intelligence is in an arms race to the bottom</h1> -->
+<!-- </div> -->
+<!-- <div class="content-lower"> -->
+<!-- <div class="content-description"> -->
+<!-- <p> -->
+<!-- Phasellus in massa justo. Donec leo nulla, consectetur et dignissim sed, egestas id tellus. Etiam in posuere -->
+<!-- lacus, nec dapibus lectus. Integer rhoncus dignissim urna in lobortis. Suspendisse fringilla sem a ante -->
+<!-- consectetur scelerisque. -->
+<!-- </p> -->
+<!-- </div> -->
+<!-- <div class="content-information"> -->
+<!-- <p>2024-10-31</p> -->
+<!-- <p>Baxter Eaves</p> -->
+<!-- </div> -->
+<!-- <br /> -->
+<!-- <div class="content-tags"> -->
+<!-- <p class="tag">AI</p> -->
+<!-- <p class="tag">Stats</p> -->
+<!-- <p class="tag">Thoughts</p> -->
+<!-- </div> -->
+<!-- </div> -->
+<!-- </div> -->
+<!-- {% endfor %} -->
+
+</div>
+{% endblock content %}

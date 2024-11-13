@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block head %}
+{{ super() }}
+
+<meta property="og:title" content="Y{{ page.title }}">
+<meta property="og:description" content="{{ page.content | striptags | truncate(length=175) }}">
+<meta property="og:image" content="{{ page.extra.image }}">
+<meta property="og:url" content="{{ current_url }}">
+<meta property="og:type" content="website">
+
+<style>
+  @media screen and (max-width: 800px) {
+    #sidebar-container {
+      display: none;
+    }
+  }
+</style>
+
+{% endblock head %}
+
+{% block content %}
+<div id="post">
+  <!-- <div class="content-preview" style="background-image: url('{{ page.extra.image }}');"> -->
+  <!-- <div class="content-image"> </div> -->
+  <!-- <img class="post-image" src="" {{ page.extra.image }}" /> -->
+  <!-- <h1 class="content-title">{{ page.title }}</h1> -->
+  <!-- </div> -->
+  <div>
+    <!-- <p>{{ page.extra.type }}</p> -->
+    <h1 id="post-title">{{ page.title }}</h1>
+    <img src="{{ page.extra.image }}" width=100% />
+    <div class="post-info">
+      <div class="content-information">
+        <p><code style="text-transform: uppercase;">{{ page.extra.author }}</code></p>
+        <p>{{ page.date }}</p>
+      </div>
+      <div class="content-tags">
+        {% for tag in page.taxonomies.tags %}
+        <p class="tag">{{ tag }}</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  {{ page.content | safe }}
+
+  <center>
+    <p>
+      <a href="/"> Home </a>
+    </p>
+  </center>
+</div>
+{% endblock content %}
