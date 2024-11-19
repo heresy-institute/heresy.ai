@@ -204,6 +204,7 @@ li {
 
 #content-container {
   flex-grow: 2;
+  flex-shrink: 1;
   max-height: 100vh;
   overflow-y: scroll;
   display: grid;
@@ -212,7 +213,7 @@ li {
 }
 
 #content {
-  width: 80rem;
+  max-width: 80rem;
   display: flex;
   flex-wrap: wrap;
   gap: 2rem;
