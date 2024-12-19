@@ -21,15 +21,9 @@
 
 {% block content %}
 <div id="post">
-  <!-- <div class="content-preview" style="background-image: url('{{ page.extra.image }}');"> -->
-  <!-- <div class="content-image"> </div> -->
-  <!-- <img class="post-image" src="" {{ page.extra.image }}" /> -->
-  <!-- <h1 class="content-title">{{ page.title }}</h1> -->
-  <!-- </div> -->
   <div>
-    <!-- <p>{{ page.extra.type }}</p> -->
     <h1 id="post-title">{{ page.title }}</h1>
-    <img src="{{ page.extra.image }}" width=100% />
+    <img class="post-image" src="{{ page.extra.image }}" />
     <div class="post-info">
       <div class="content-information">
         <p><code style="text-transform: uppercase;">{{ page.extra.author }}</code></p>

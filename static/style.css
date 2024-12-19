@@ -19,6 +19,11 @@ html {
   tab-size: 4;
 }
 
+li {
+  line-height: 1.8;
+  padding-bottom: 0.5rem;
+}
+
 :root,
 html[data-theme="light"] {
   --primary-color: #333;
@@ -478,4 +483,60 @@ div.footnote-definition sup {
   nav {
     position: relative;
   }
+}
+
+@page {
+  size: auto;
+  margin: 20mm 0 10mm 0;
+}
+
+@media print {
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5 {
+    page-break-after: avoid;
+  }
+
+  body {
+    margin: 0;
+    ;
+  }
+
+  #main {
+    height: auto;
+  }
+
+  #sidebar-container,
+  nav {
+    display: none;
+  }
+
+  #content-container {
+    width: 100%;
+    max-height: none;
+    overflow-y: none;
+  }
+
+
+  #post,
+  #content {
+    max-width: none;
+    width: 100%;
+    display: block;
+    padding-top: 0;
+  }
+
+  #post img.post-image {
+    width: 67%;
+    display: block;
+    margin: 0 auto;
+  }
+
+  #post-title {
+    font-size: 2rem;
+  }
+
 }
