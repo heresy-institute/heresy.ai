@@ -15,6 +15,19 @@
   {% endblock head %}
 </head>
 
+{% if "heresy" in config.base_url %}
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-3PF3LWKT0F"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag() {dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-3PF3LWKT0F');
+</script>
+{% else %}
+<!-- NO ANALYTICS! -->
+{% endif %}
+
 <body>
   <nav>
     <div id="nav-inner">
