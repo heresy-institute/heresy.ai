@@ -104,6 +104,7 @@ a:hover {
 pre {
   padding: 1rem;
   border-radius: 8px;
+  overflow-x: scroll;
 }
 
 #nav-inner {
@@ -270,6 +271,10 @@ div.content-item.top {
   /* flex-basis: 100%; */
 }
 
+img {
+  max-width: 100%;
+}
+
 div.content-preview {
   position: relative;
   height: 18rem;
@@ -429,7 +434,7 @@ div.footnote-definition sup {
   }
 
   #content {
-    width: 100%;
+    width: 100vw;
     padding-top: 1rem;
   }
 
@@ -450,6 +455,11 @@ div.footnote-definition sup {
 }
 
 @media screen and (max-width: 800px) {
+
+  img {
+    width: 100%;
+  }
+
   #content {
     padding: 1rem;
   }
@@ -464,10 +474,12 @@ div.footnote-definition sup {
 
   div.content-information {
     display: block;
+    min-width: 9rem;
   }
 
   div.content-tags {
     align-items: flex-start;
+    flex-wrap: wrap;
   }
 
   div.content-lower {
