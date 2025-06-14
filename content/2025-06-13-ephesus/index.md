@@ -12,7 +12,7 @@ type = "post"
 image = "/img/robot-looking-down-on-library.webp"
 +++
 
-[Redpoll](https://redpoll.ai/) is a data quality company. Finding and monitoring for errors and anomalies is our bread and butter, and is also something that AI/ML-at-large has had a really hard time with. The reason that AI/ML has such a hard time is that an anomaly or an error is data that "doesn't make sense", and to know what doesn't make sense you have to know what does. You have to understand the process behind the data. Understanding is something that traditional ML models like random forests, neural nets, etc suck at. But understanding is something explicit process modeling are awesome at. You define a model of the process the generates the data, so then data that are inconsistent with the model are likely errors or anomalies. Bayesian hierarchical models allows us to assign likelihoods to observations under a generative process model, which is even better. Now "erroneous-ness" and "anomalous-ness" are on a continuum. But here's the problem: what if we don't know how to model the data, or the data we have don't fit into the constraints of existing modeling tools (like probabilistic programming languages; PPLs), or we have too much data to fit into existing modeling tools? The vast majority of data we deal with at Redpoll sits in giant relational/graph databases with many billions of records of sparse and heterogenous data--not really something you can just throw into [STAN](https://mc-stan.org/) or [Lace](https://www.lace.dev/). So, what now? There's only one thing to do: build a paradigm-shifting probabilistic programming language (PPL) backed by Bayesian Nonparameterics that scales to petabyte data.
+[Redpoll](https://redpoll.ai/) is a data quality company. Finding and monitoring for errors and anomalies is our bread and butter, and it's also something that AI/ML-at-large has had a really hard time with. The reason that AI/ML has such a hard time is that an anomaly or an error is data that "doesn't make sense", and to know what doesn't make sense you have to know what does. You have to *understand* the process behind the data. And, trad AI/ML, like boosted trees neural nets doesn't do understanding (but that doesn't stop us trying to use them in science like morons). Understanding is something explicit process models are awesome at. We define a model of the process the generates the data; data that are inconsistent with that model are errors or anomalies. Bayesian hierarchical models allow us to assign likelihoods to observations under a generative process model, which is even better. Now "erroneous-ness" and "anomalous-ness" are on a continuum. But there are problems: what if we don't know how to model the data, or the data we have don't fit into the constraints of modeling tools, or we have more data than modeling tools can handle? The vast majority of data we deal with at Redpoll sits in giant relational/graph databases with many billions of records of sparse and heterogenous data that nobody has any clue how to model holistically--not really something you can just throw into [STAN](https://mc-stan.org/) or [Lace](https://www.lace.dev/). So, what now? There's only one thing to do: build a paradigm-shifting probabilistic programming language (PPL) backed by Bayesian Nonparameterics that scales to petabyte data.
 
 # Enter Ephesus
 
@@ -96,9 +96,9 @@ fn main() {
 
 The above code builds the model code from the schema, initializes the model, fits the model, saves the model metadata, and simulates a bunch of synthetic data from the model. Here is an example of this model from a previous run:
 
-![Ephesus recoving the joint distirbution of an image.](laplace.gif)
+![Ephesus recovering the joint distribution of an image.](laplace.gif)
 
-On the left we have the original data, and on the other left (right) we have the simulated output at different steps of the fitting proceedure.
+On the left we have the original data, and on the other left (right) we have the simulated output at different steps of the fitting procedure.
 
 ### Aside: Why build a language? Why not just use rust or JSON or something?
 
@@ -189,7 +189,7 @@ table Admissions[hadm_id] {
 
 We see there are `Categorical` columns, `Datetime` columns, `Binary` columns, and even a `List` column. And all the columns, other than the foreign key are `mcar`, which is "missing completely at random".
 
-`Categorical` columns take a support argument. We can say `Catgeorical[3]` for a category that takes on values in {0, 1, 2}, or we can say `Categorical[Language]` where `Language` is an `enum` defined like this:
+`Categorical` columns take a support argument. We can say `Categorical[3]` for a category that takes on values in {0, 1, 2}, or we can say `Categorical[Language]` where `Language` is an `enum` defined like this:
 
 ```
 enum Language {
@@ -213,7 +213,7 @@ The above will create the `enum` with all the unique variants in the `language` 
 
 ## Compound Data Types
 
-So what about `Datetime`? How does that work? How does one model a `Datetime`? The short answer is "however you want". A compound type is a colum that expands into a number of other columns. For example, we can define `Datetime` using the `struct` keyword
+So what about `Datetime`? How does that work? How does one model a `Datetime`? The short answer is "however you want". A compound type is a column that expands into a number of other columns. For example, we can define `Datetime` using the `struct` keyword
 
 ```
 struct Datetime[DateTime(format="ISO-8601")] {
@@ -227,13 +227,13 @@ struct Datetime[DateTime(format="ISO-8601")] {
 }
 ```
 
-The key piece here is in the brakets,
+The key piece here is in the brackets,
 
 ```
 [DateTime(format="ISO-8601")]
 ```
 
-This says that this compound colum is extracted using the built in `DateTime` extractor with the `format` argument set to `"ISO-8601"` (format can take other common formats or a format string like `"%Y-%m-%d"`). The extractor expands the base column into a number of columns that we can select and specify models for in the body of the struct. In this case, we select `day_of_week`, `hour`, `minute`, and `second`. We model `day_of_week` as categorical, and model `hour`, `minute`, and `second` as periodic (wrapping) integers.
+This says that this compound column is extracted using the built in `DateTime` extractor with the `format` argument set to `"ISO-8601"` (format can take other common formats or a format string like `"%Y-%m-%d"`). The extractor expands the base column into a number of columns that we can select and specify models for in the body of the struct. In this case, we select `day_of_week`, `hour`, `minute`, and `second`. We model `day_of_week` as categorical, and model `hour`, `minute`, and `second` as periodic (wrapping) integers.
 
 Now we can do things like
 
@@ -257,7 +257,7 @@ table Event[Id] {
 }
 ```
 
-We can also define anonymous compund types inline like this:
+We can also define anonymous compound types inline like this:
 
 ```
 enum EventType {
@@ -295,11 +295,11 @@ table Event[Id] {
 }
 ```
 
-which is kind of ugly, but is there if you need it.
+which is kind of ugly, but it's there if you need it.
 
 ### Custom compound data types
 
-Here is my favorite part of the API. What if we have a new compound type that Ephesus doesn't have a default extractor for? We define one ourselves using rust! Procedural macros just expand to code inplace. So, if we implement the `Extractor` trait for a rust struct matching the name of the extractor passed to our compound type, we're good to go.
+Here is my favorite part of the API. What if we have a new compound type that Ephesus doesn't have a default extractor for? We define one ourselves using rust! Procedural macros just expand to code in place. So, if we implement the `Extractor` trait for a rust struct matching the name of the extractor passed to our compound type, we're good to go.
 
 Imagine that, instead of coming in two float-type columns, our image pixel coordinates came in a single string column defining coordinate pairs, e.g., `"1.2,3.1"`. We could do this:
 
@@ -344,7 +344,7 @@ inline_schema!{
     }
 
     table Xy[Id] {
-      coods: Coords,
+      corods: Coords,
     }
   "#
 }
@@ -365,13 +365,13 @@ For example,
 ```
 #[data(store = "MmVec")]
 table Xy[Id] {
-  coods: Coords,
+  coords: Coords,
 }
 ```
 
 the above backs large vectors with memory mapped files. If we couple this with file systems like [lustre](https://www.lustre.org/), we can go really, really big.
 
-Also, also, Ephesus is *embarassingly parallel* and computation with can be split across many machine--not just computation across multiple tables, but computations within single tables as well.
+Also, also, Ephesus is *embarrassingly parallel* and computation with can be split across many machine--not just computation across multiple tables, but computations within single tables as well.
 
 # The Future and How to get involved
 
