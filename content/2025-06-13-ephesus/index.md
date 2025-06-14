@@ -122,7 +122,7 @@ table X[Id] {
     | Nix(m=0.5, k=1.0, v=1.0, s2=1.0),
 }
 
-#[dataframe(path="mon-laplace.parquet")]
+#[dataframe(path="m-laplace.parquet")]
 table Y[Id] {
   fk Id: X.Id,
   dens y: Float  
@@ -373,6 +373,6 @@ the above backs large vectors with memory mapped files. If we couple this with f
 
 Also, also, Ephesus is *embarrassingly parallel* and computation with can be split across many machine--not just computation across multiple tables, but computations within single tables as well.
 
-# The Future and How to get involved
+# The Future & how to get involved
 
 I apologize if I've gotten you terribly excited to try this. At present Ephesus is locked down under heavy development as part of our core [data QA/QC](https://redpoll.ai/) and **new** [federated inference tech](https://iixx.io). If you have a use case that Ephesus might help with, like quickly building Bayesian models across many semi-structured datasets, please reach out to me on [linkedin](https://www.linkedin.com/in/baxtereaves/). I'm perfectly friendly and happy to help--whether it be with Ephesus or pointing your down other avenues that might be a better fit.
