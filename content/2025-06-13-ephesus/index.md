@@ -77,10 +77,10 @@ fn main() {
   // Save our work
   model.write_metadata("m-laplace.metadata").unwrap();
 
-  let coords = (
+  let coords = [
     ("X", vec!["x"]),  // 'x' from table 'X'
     ("Y", vec!["y"]),  // 'y' from table 'Y'
-  );
+  ];
 
   // Draw from the joint distribution of x and y
   let simulated_output = model.simulate(
