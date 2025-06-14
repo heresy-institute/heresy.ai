@@ -19,7 +19,7 @@ Ephesus is a rust-inspired PPL for hybrid relational/graph databases that--throu
 
 Ephesus is written in [rust](https://www.rust-lang.org/), using [pest](https://pest.rs/) for parsing, and backed by [polars](https://pola.rs/) for data storage and streaming. It's very early days for Ephesus, but here's what we have.
 
-Ephesus build on the idea that a database schema is a model specification describing how the data flow and interact. Our goal with Ephesus is to create a modeling framework the keeps the model as close to the original data representation as possible, so Ephesus models are specified in a schema and built/fit/queried in rust. For Example, to define a model of an image using two tables, we'd define the schema like this:
+Ephesus builds on the idea that a database schema is a model specification describing how the data flow and interact. Our goal with Ephesus is to create a modeling framework the keeps the internals of the model as close as possible to the original data representation. So, Ephesus models are specified in a schema and built/fit/queried in rust. For Example, to define a model of an image using two tables, we'd define the schema like this:
 
 ```
 // schema.ephesus
@@ -63,6 +63,7 @@ fn main() {
 
   // Load in the data for each table
   let df = load_parquet("m-laplace.parquet").unwrap();
+  // Both columns are in the one parquet file
   let data = MLaplace::TableData {
     X: df.clone(),
     Y: df,
@@ -102,9 +103,9 @@ fn main() {
 }
 ```
 
-The above code builds the model code from the schema, initializes the model, fits the model, saves the model metadata, and simulates a bunch of synthetic data from the model, and computes the conditional likelihood of some data given some observation. Note that Ephesus allows you to query (via `simulate` and `logp`) any conditional distribution of the form `p(features|other_features)` without any extra modeling or training.
+The above rust code builds the model code from the schema, initializes the model, fits the model, saves the model metadata, simulates a bunch of synthetic data from the model, and computes the conditional likelihood of some data given some observation. Similar to Lace, Ephesus allows you to query (via `simulate` and `logp`) *any* conditional distribution of the form `p(features|other_features)` without any extra modeling or training.
 
-What about inference quality? Here is an example of the simulated output from the `MLaplace`:
+What about inference quality? Here is an example of the simulated output from the `MLaplace` model:
 
 ![Ephesus recovering the joint distribution of an image.](laplace.gif)
 
@@ -119,15 +120,15 @@ On the left we have the original data, and on the other left (right) we have the
 ### Aside: Why not use deep learning?
 
 Mainstream AI based on Artificial Neural Networks (ANNs) is notoriously bad at structured data problems. Apart from being opaque and uninterpretable, popular ANN-based approaches to graph and relational data like Graph Neural Networks (GNNs) and Relational Deep Learning (RDL) have a number of limitations:
-- They use embeddings that distort the structure of the original data
-- They're expensive to scale, requiring special hardware like GPUs and TPUs
+- They use embeddings that distort the structure of the original data.
+- They're expensive to scale, requiring special hardware like GPUs and TPUs to run in reasonable time.
 - They're inflexible in the sense that each question you want to ask requires additional model building.
 - They're bad at quantifying (aleatoric and epistemic) uncertainty, because 1) they don't do posterior sampling and 2) they're not guaranteed to build sane models of the data generating process.
 
 
 ## Doing more in the script
 
-You might have noticed that, other than defining the data types, we didn't do any modeling in the schema file. Thats one of the great thing about Bayesian nonparametrics--it does inference over the form and complexity of the underlying model so you can get away with specifying basically nothing. That said, it still needs priors, so if we don't define them Ephesus will generate empirical priors by default. However, we often we know a little more than nothing about our data. In that case, Ephesus gives power users the ability to dig in a little more.
+You might have noticed that, other than defining the data types, we didn't do any "real" modeling in the schema file. That's one of the great thing about Bayesian nonparametrics--it does inference over the form and complexity of the underlying model so you can get away with specifying basically nothing. That said, it still needs priors, so if we don't define them Ephesus will generate empirical priors by default. However, we often we know a little more than nothing about our data. In that case, Ephesus gives power users the ability to dig in a little deeper.
 
 ```
 // schema.ephesus
@@ -155,7 +156,7 @@ table Y[Id] {
 }
 ```
 
-We did a couple of things. Rustaceans will first notice the attribute `#[dataframe]`. This tells ephesus just to load that tables data from a specific parquet file so we can skip steps when we build the model in rust. The next thing you'll notice is that we've added a lot more code to each column spec.
+We did a couple of things. Rustaceans will first notice the attribute `#[dataframe]`. This tells Ephesus just to load that tables data from a specific parquet file so we can skip steps when we build the model in the rust code. The next thing you'll notice is that we've added a lot more code to each column spec.
 
 ```
   dens x: Float
@@ -220,7 +221,7 @@ enum Language {
 }
 ```
 
-Defining variants like this is good for when you have an `enum` with like five variants. But what if there are thousands? We can infer them from the data.
+Explicitly defining variants like this is good for when you have an `enum` with like five variants. But what if there are thousands? We can infer them from the data.
 
 ```
 #[infer(path="ADMISSIONS.csv", field="language")]
@@ -228,6 +229,13 @@ enum Language { .. }
 ```
 
 The above will create the `enum` with all the unique variants in the `language` column of `ADMISSIONS.csv`.
+
+We can also just store them in a different text file, which is a bit more explicit.
+
+```
+#[infer(path="language-variants.txt")]
+enum Language { .. }
+```
 
 ## Compound Data Types
 
@@ -251,7 +259,7 @@ The key piece here is in the brackets,
 [DateTime(format="ISO-8601")]
 ```
 
-This says that this compound column is extracted using the built in `DateTime` extractor with the `format` argument set to `"ISO-8601"` (format can take other common formats or a format string like `"%Y-%m-%d"`). The extractor expands the base column into a number of columns that we can select and specify models for in the body of the struct. In this case, we select `day_of_week`, `hour`, `minute`, and `second`. We model `day_of_week` as categorical, and model `hour`, `minute`, and `second` as periodic (wrapping) integers.
+This says that this compound column is extracted using the (built-in) `DateTime` extractor with the `format` argument set to `"ISO-8601"` (format can take other common formats or a format string like `"%Y-%m-%d"`). The extractor expands the base column into a number of columns that we can select and specify models for in the body of the struct. In this case, we select `day_of_week`, `hour`, `minute`, and `second`. We model `day_of_week` as categorical, and model `hour`, `minute`, and `second` as periodic (wrapping) integers.
 
 Now we can do things like
 
@@ -295,7 +303,7 @@ table Event[Id] {
 }
 ```
 
-And I forgot to mention that you can do the same thing with enums:
+And I forgot to mention it earlier, but you can do the same thing with enums:
 
 ```
 table Event[Id] {
@@ -313,11 +321,11 @@ table Event[Id] {
 }
 ```
 
-which is kind of ugly, but it's there if you need it.
+which is kind of ugly IMO, but it's there if you want it.
 
 ### Custom compound data types
 
-Here is my favorite part of the API. What if we have a new compound type that Ephesus doesn't have a default extractor for? We define one ourselves using rust! Procedural macros just expand to code in place. So, if we implement the `Extractor` trait for a rust struct matching the name of the extractor passed to our compound type, we're good to go.
+Here is my favorite part of the API. What if we have a new compound type that Ephesus doesn't have a built-in extractor for? We define one ourselves using rust! Procedural macros just expand to code in place. So, if we implement the `Extractor` trait for a rust struct matching the name of the extractor passed to our compound type, we're good to go.
 
 Imagine that, instead of coming in two float-type columns, our image pixel coordinates came in a single string column defining coordinate pairs, e.g., `"1.2,3.1"`. We could do this:
 
@@ -372,11 +380,11 @@ fn main() {
 }
 ```
 
-Simple as that. Behind the scenes, the `Base` associate type in `Extractor` tells Ephesus how to convert the polars `Series` to an iterator over the proper type. The `ToDataFrame` derive macro is required for converting an iterator over `Coords` to a polars `DataFrame`. Other than that, it's rust as normal.
+Simple as that. Behind the scenes, the `Base` associate type in `Extractor` tells Ephesus how to convert the polars `Series` to an iterator over the proper type. The `ToDataFrame` derive macro is required for converting an iterator over `Coords` to a polars `DataFrame`. Other than that, it's rust as usual.
 
 # Does it scale?
 
-"But Bax," you say, "Bayesian models are slow. General models are slow. Nonparameteric models are slow. So surely Ephesus is prohibitively slow." *Au contraire*. Using a single-table Ephesus model to cluster bivariate continuous data, we can go from 0 to 0.98 [ARI](https://en.wikipedia.org/wiki/Rand_index) (0 is random; 1.0 is perfect) on 1 Billion rows in under 12 seconds on a M4 Macbook Pro. Ephesus models can be also be backed with Memory Mapped files, and even remote data stores, when the data and model are too big to fit in memory.
+"But Bax," you say, "Bayesian models are *slow*. General models are *slow*. Nonparameteric models are *slow*. So surely Ephesus is prohibitively slow." *Au contraire*. Using a single-table Ephesus model to cluster bivariate continuous data, we can go from 0 to 0.98 [ARI](https://en.wikipedia.org/wiki/Rand_index) (0 is random; 1.0 is perfect) on 1 Billion rows in under 12 seconds on an M4 Macbook Pro. Ephesus models can be also be backed with Memory Mapped files, and even remote data stores, when the data and model are too big to fit in memory.
 
 For example,
 
@@ -389,8 +397,8 @@ table Xy[Id] {
 
 the above backs large vectors with memory mapped files. If we couple this with file systems like [lustre](https://www.lustre.org/), we can go really, really big.
 
-Also, also, Ephesus is *embarrassingly parallel* and computation with can be split across many machine--not just computation across multiple tables, but computations within single tables as well.
+Also, also, Ephesus is *embarrassingly parallel* and computation can be split across many machine--not just computation across multiple tables, but computations within single tables as well.
 
 # The future & how to get involved
 
-I apologize if I've gotten you terribly excited to try this. At present Ephesus is locked down under heavy development as part of our core [data QA/QC](https://redpoll.ai/) and **new** [federated inference tech](https://iixx.io). If you have a use case that Ephesus might help with, like quickly building Bayesian models across many semi-structured datasets, please reach out to me on [linkedin](https://www.linkedin.com/in/baxtereaves/). I'm perfectly friendly and happy to help--whether it be with Ephesus or pointing your down other avenues that might be a better fit.
+I apologize if I've gotten you terribly excited to try this. At present Ephesus is locked down under heavy development as part of our core [data QA/QC](https://redpoll.ai/) and **new** [secure federated inference tech](https://iixx.io). If you have a use case that Ephesus might help with, like quickly building Bayesian models across many structured datasets, please reach out to me on [linkedin](https://www.linkedin.com/in/baxtereaves/). I'm perfectly friendly and happy to help--whether it be with Ephesus or by pointing you down other avenues that might be a better fit.
