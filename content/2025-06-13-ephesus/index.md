@@ -16,11 +16,13 @@ image = "/img/robot-looking-down-on-library.webp"
 
 # Enter Ephesus
 
-Ephesus is a PPL for hybrid relational/graph databases that--through the magic of Bayesian nonparametrics--builds a joint Bayesian model over the entire database without having to define an explicit generative process.
+If you're interested why we don't just use Deep Learning models like GNNs and RDL, skip to the aside [here](#aside-why-not-use-deep-learning).
+
+Ephesus is a rust-inspired PPL for hybrid relational/graph databases that--through the magic of Bayesian nonparametrics--builds a joint Bayesian model over the entire database without having to define an explicit generative process.
 
 Ephesus is written in [rust](https://www.rust-lang.org/), using [pest](https://pest.rs/) for parsing, and backed by [polars](https://pola.rs/) for data storage and streaming. It's very early days for Ephesus, but here's what we have.
 
-Ephesus models are specified in a schema and built/fit/queried in rust. For Example, to define a model of an image using two tables, we'd define the schema like this:
+Ephesus build on the idea that a database schema is a model specification describing how the data flow and interact. Our goal with Ephesus is to create a modeling framework the keeps the model as close to the original data representation as possible, so Ephesus models are specified in a schema and built/fit/queried in rust. For Example, to define a model of an image using two tables, we'd define the schema like this:
 
 ```
 // schema.ephesus
@@ -36,7 +38,7 @@ table Y[Id] {
 }
 ```
 
-We specify the model name, `MLaplace`, which will be converted into a rust module (you'll see this later). Then we define the tables. `table X[Id]` says, we have a table called `X` that has an index column called `Id`. The table `X` has one feature: `dens x: Float`, which says that feature `x` is never missing (`dens`), and takes on floating point values. The tabe `Y` is basically the same, but it has this `fk Id: X.Id` bit, which says that table `Y` has a foreign key called `Id` that indexes into table `X` by table `X`'s `Id` column. That's it. We could have just modeled it as one table like this
+We specify the model name, `MLaplace`, which will be converted into a rust module (you'll see this later). Then we define the tables. `table X[Id]` says, we have a table called `X` that has an index column called `Id`. The table `X` has one feature: `dens x: Float`, which says that feature `x` is never missing (`dens`), and takes on floating point values. The table `Y` is basically the same, but it has this `fk Id: X.Id` bit, which says that table `Y` has a foreign key called `Id` that indexes into table `X` by table `X`'s `Id` column. That's it. We could have just modeled it as one table like this
 
 ```
 model: MLaplace;
@@ -54,6 +56,7 @@ Now what? We use rust procedural macros to turn the schema into rust code and in
 ```rust
 use ephesus::codegen::load_schema;
 use ephesus::utils::load_parquet;
+use ephesus::ColumnIndex;
 
 // Use a procedural macro to parse the schema and generate the model code
 load_schema!("schema.ephesus");
@@ -91,10 +94,20 @@ fn main() {
   ).unwrap();
 
   // ...save off the output
+
+  // compute the (log) likelihood that X.x = 12.0 given that Y.y = 4.2
+  let logp = model.logp(
+    [("X", vec!["x".equals(12.0)]).try_into().unwrap(),
+    Some([      
+      ("Y", vec!["y".equals(4.2)]),
+    ].try_into().unwrap())
+  ).unwrap();
 }
 ```
 
-The above code builds the model code from the schema, initializes the model, fits the model, saves the model metadata, and simulates a bunch of synthetic data from the model. Here is an example of this model from a previous run:
+The above code builds the model code from the schema, initializes the model, fits the model, saves the model metadata, and simulates a bunch of synthetic data from the model, and computes the conditional likelihood of some data given some observation. Note that Ephesus allows you to query (via `simulate` and `logp`) any conditional distribution of the form `p(features|other_features)` without any extra modeling or training.
+
+What about inference quality? Here is an example of the simulated output from the `MLaplace`:
 
 ![Ephesus recovering the joint distribution of an image.](laplace.gif)
 
@@ -105,6 +118,14 @@ On the left we have the original data, and on the other left (right) we have the
 1. Using code generation allows us to build fast, cache-efficient models. The alternative is using dynamically sized containers and enums all over the place, which would both considerably slow down the code and increase the memory footprint. Code generation also means less fiddling with trait bounds.
 2. We could of course build models using specs written in something like JSON or YAML, but using the custom schema language saves thousands of lines of text and is infinitely easier to read. Customer integration is already miserable work, and we'd rather not spend weeks writing 100,000 line JSON files.
 3. I could have probably gotten away with using JSON schemas that deserialize into rust structs that convert into dynamic model objects, but I'm a bad startup founder and I'm [doing things that scale](https://paulgraham.com/ds.html) just because they're fun (and make better screenshots).
+
+### Aside: Why not use deep learning?
+
+Mainstream AI based on Artificial Neural Networks (ANNs) is notoriously bad at structured data problems. Apart from being opaque and uninterpretable, popular ANN-based approaches to graph and relational data like Graph Neural Networks (GNNs) and Relational Deep Learning (RDL) have a number of limitations:
+- They use embeddings that distort the structure of the original data
+- They're expensive to scale, requiring special hardware like GPUs and TPUs
+- They're inflexible in the sense that each question you want to ask requires additional model building.
+- They're bad at quantifying (aleatoric and epistemic) uncertainty, because 1) they don't do posterior sampling and 2) they're not guaranteed to build sane models of the data generating process.
 
 
 ## Doing more in the script
@@ -373,6 +394,6 @@ the above backs large vectors with memory mapped files. If we couple this with f
 
 Also, also, Ephesus is *embarrassingly parallel* and computation with can be split across many machine--not just computation across multiple tables, but computations within single tables as well.
 
-# The Future & how to get involved
+# The future & how to get involved
 
 I apologize if I've gotten you terribly excited to try this. At present Ephesus is locked down under heavy development as part of our core [data QA/QC](https://redpoll.ai/) and **new** [federated inference tech](https://iixx.io). If you have a use case that Ephesus might help with, like quickly building Bayesian models across many semi-structured datasets, please reach out to me on [linkedin](https://www.linkedin.com/in/baxtereaves/). I'm perfectly friendly and happy to help--whether it be with Ephesus or pointing your down other avenues that might be a better fit.
