@@ -95,7 +95,7 @@ fn main() {
 
   // compute the (log) likelihood that X.x = 12.0 given that Y.y = 4.2
   let logp = model.logp(
-    [("X", vec!["x".equals(12.0)]).try_into().unwrap(),
+    [("X", vec!["x".equals(12.0)])].try_into().unwrap(),
     Some([      
       ("Y", vec!["y".equals(4.2)]),
     ].try_into().unwrap())
